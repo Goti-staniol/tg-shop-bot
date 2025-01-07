@@ -1,8 +1,13 @@
-from sqlalchemy.orm import Session, sessionmaker
 from .models import (
     User,
+    MarketProducts,
     engine
 )
+
+from sqlalchemy.orm import Session, sessionmaker
+from typing import Tuple
+
+import uuid
 
 def get_session() -> Session:
     Session = sessionmaker(bind=engine)
@@ -43,3 +48,30 @@ def get_agreement(user_id: int) -> bool:
     finally:
         session.close()
 
+def add_new_product(
+    user_id: int,
+    product_name: str,
+    product_description: str | None,
+    product_image: str | None,
+    product_price: float | int,
+    product_to_receive: Tuple[str, str]
+) -> None:
+    session = get_session()
+    
+    file_to_recieve, text_to_recieve = product_to_receive
+    
+    session.add(
+        MarketProducts(
+            product_id=str(uuid.uuid4()),
+            user_id=user_id,
+            product_name=product_name,
+            product_discription=product_description,
+            product_image=product_image,
+            product_price=product_price,
+            text_to_receive=text_to_recieve,
+            file_to_receive=file_to_recieve
+        )
+    )
+    session.commit()
+    session.close()
+    

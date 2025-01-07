@@ -25,11 +25,18 @@ add_product_kb = InlineKeyboardMarkup(inline_keyboard=[
         callback_data='add_name'
     ), InlineKeyboardButton(
         text='Добавить описание',
-        callback_data='add_description'
+        callback_data='add_desc'
     )],
     [InlineKeyboardButton(
         text='Добавить фото',
-        callback_data='add_photo'
+        callback_data='add_image'
+    ), InlineKeyboardButton(
+        text='Добавить цену',
+        callback_data='add_price'
+    )],
+    [InlineKeyboardButton(
+        text='Дальше',
+        callback_data='further'
     )]
 ])
 
