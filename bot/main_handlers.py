@@ -41,6 +41,7 @@ async def start_handler(msg: Message, state: FSMContext) -> None:
         )
     await state.clear()
 
+
 @main_router.callback_query(F.data == 'agree')
 async def agree_handler(cb: CallbackQuery) -> None:
     await sent_msg.delete()
