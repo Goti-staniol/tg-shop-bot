@@ -42,7 +42,7 @@ def update_product_text(
             
     return remove_space(f'''
             Название: <b>{name_product}</b>
-            Цена: <b>{price_product}</b>
+            Цена: <b>{price_product} $</b>
             ==================================
             Описание: <b>{description_product}</b>
         ''')

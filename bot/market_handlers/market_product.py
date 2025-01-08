@@ -60,7 +60,7 @@ async def add_name_product(msg: Message, state: FSMContext) -> None:
         
         data = await state.get_data()
         name = data.get('name')
-        description = data.get('description')
+        description = data.get('desc')
         price = data.get('price')
         image_id = data.get('image_id')
         
@@ -113,7 +113,7 @@ async def add_description(msg: Message, state: FSMContext) -> None:
         
         data = await state.get_data()
         name = data.get('name')
-        description = data.get('description')
+        description = data.get('desc')
         price = data.get('price')
         image_id = data.get('image_id')
         
@@ -170,7 +170,7 @@ async def add_image(msg: Message, state: FSMContext) -> None:
     
     data = await state.get_data()
     name = data.get('name')
-    description = data.get('description')
+    description = data.get('desc')
     price = data.get('price')
     image_id = data.get('image_id')
     
@@ -217,7 +217,7 @@ async def add_price(msg: Message, state: FSMContext) -> None:
         
         data = await state.get_data()
         name = data.get('name')
-        description = data.get('description')
+        description = data.get('desc')
         price = data.get('price')
         image_id = data.get('image_id')
         
@@ -244,7 +244,7 @@ async def add_price(msg: Message, state: FSMContext) -> None:
         )
     except ValueError:
         await msg.answer(
-            text='Цена должна быть число! Пример: 1, 1.0',
+            text='Цена должна быть числом! Пример: 1, 1.0',
             reply_markup=back_btn
         )
 
@@ -270,7 +270,7 @@ async def validate_data(cb: CallbackQuery, state: FSMContext) -> None:
 async def public_router(msg: Message, state: FSMContext) -> None:
     data = await state.get_data()
     name = data.get('name')
-    description = data.get('description')
+    description = data.get('desc')
     price = data.get('price')
     image_id = data.get('image_id')
     product_id = str(uuid.uuid4())
@@ -315,7 +315,7 @@ async def back_state(cb: CallbackQuery, state: FSMContext) -> None:
     
     data = await state.get_data()
     name = data.get('name')
-    description = data.get('description')
+    description = data.get('desc')
     price = data.get('price')
     image_id = data.get('image_id')
     
