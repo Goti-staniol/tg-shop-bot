@@ -82,6 +82,7 @@ async def user_products_hadler(cb: CallbackQuery) -> None:
         reply_markup=keyboard
     )
 
+
 @main_router.callback_query(F.data.startswith('page_'))
 async def pages_handler(cb: CallbackQuery) -> None:
     page = int(cb.data.split('_')[1])
