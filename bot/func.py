@@ -30,7 +30,6 @@ def update_product_text(
     description_product: str = None,
     price_product: str = None
 ) -> str:
-    
     name_product = name_product if name_product is not None\
         else 'Обьязательно'
     price_product = price_product if price_product is not None\
@@ -47,3 +46,36 @@ def update_product_text(
             ==================================
             Описание: <b>{description_product}</b>
         ''')
+
+def generate_keyboard(
+    product_slice: list,
+    current_page: int,
+    total_pages: int,
+) -> list:
+    btn_list = []
+    navigation_btns = []
+    
+    for product in product_slice:
+        btn_list.append(
+            [InlineKeyboardButton(
+                text=product.product_name,
+                callback_data=product.product_id
+            )]
+        )
+        
+    if current_page > 1:
+        navigation_btns.append(InlineKeyboardButton(
+            text="⬅️ Назад", 
+            callback_data=f"page_{current_page - 1}"
+        ))
+    if current_page < total_pages:
+        navigation_btns.append(InlineKeyboardButton(
+            text="Вперед ➡️", 
+            callback_data=f"page_{current_page + 1}"
+        ))
+    if navigation_btns:
+        btn_list.append(navigation_btns)
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=btn_list)
+    
+    return keyboard

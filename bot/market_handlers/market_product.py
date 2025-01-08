@@ -1,4 +1,4 @@
-from bot.kb.inline import add_product_kb
+from bot.kb.inline import add_product_kb, back_btn, home_btn
 from bot.func import (
     disable_keyboard,
     remove_space,
@@ -13,6 +13,8 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InputFile
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
+
+import uuid
 
 
 class UserState(StatesGroup):
@@ -44,7 +46,8 @@ async def add_name_handler(cb: CallbackQuery, state: FSMContext) -> None:
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
     await cb.message.answer(
-        text='Введи название товара! Не больше 50 символов!'
+        text='Введи название товара! Не больше 50 символов!',
+        reply_markup=back_btn
     )
     await state.set_state(UserState.wait_name)
 
@@ -53,7 +56,7 @@ async def add_name_handler(cb: CallbackQuery, state: FSMContext) -> None:
 async def add_name_product(msg: Message, state: FSMContext) -> None:
     if len(msg.text) < 50:
         await state.update_data(name=msg.text)
-        await msg.answer('Успешно добавлено!')
+        await msg.answer('Имя успешно добавлено!')
         
         data = await state.get_data()
         name = data.get('name')
@@ -84,7 +87,10 @@ async def add_name_product(msg: Message, state: FSMContext) -> None:
             reply_markup=keyboard
         )
     else:
-        await msg.answer('Cлишком длинное имя!')
+        await msg.answer(
+            text='Cлишком длинное имя! Попробуйте еще раз!',
+            reply_markup=back_btn
+        )
     
 
 @product_router.callback_query(F.data == 'add_desc')
@@ -93,7 +99,8 @@ async def add_desc_handler(cb: CallbackQuery, state: FSMContext) -> None:
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
     await cb.message.answer(
-        text='Введи описание товара! Не больше 200 символов!'
+        text='Введи описание товара! Не больше 200 символов!',
+        reply_markup=back_btn
     )
     await state.set_state(UserState.wait_description)
     
@@ -102,9 +109,7 @@ async def add_desc_handler(cb: CallbackQuery, state: FSMContext) -> None:
 async def add_description(msg: Message, state: FSMContext) -> None:
     if len(msg.text) < 200:
         await state.update_data(desc=msg.text)
-        await msg.answer(
-            'Успешно добавлено!'
-        )
+        await msg.answer('Описание успешно добавлено!')
         
         data = await state.get_data()
         name = data.get('name')
@@ -149,7 +154,8 @@ async def add_image_handler(cb:  CallbackQuery, state: FSMContext) -> None:
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
     await cb.message.answer(
-        text='Отправьте фотографию'
+        text='Отправьте фотографию:',
+        reply_markup=back_btn
     )
     await state.set_state(UserState.wait_image)
 
@@ -197,42 +203,50 @@ async def add_price_handler(cb: CallbackQuery, state: FSMContext) -> None:
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
     await cb.message.answer(
-        'Введи цену за товар:'
+        text='Введи цену за товар:',
+        reply_markup=back_btn
     )
     await state.set_state(UserState.wait_price)
 
 
 @product_router.message(UserState.wait_price, F.text)
 async def add_price(msg: Message, state: FSMContext) -> None:
-    await state.update_data(price=msg.text)
-    
-    data = await state.get_data()
-    name = data.get('name')
-    description = data.get('description')
-    price = data.get('price')
-    image_id = data.get('image_id')
-    
-    update_btn = {}
-    update_btn['add_price'] = ('Удалить Цену', 'del_price')
-    
-    if name:
-        update_btn['add_name'] = ('Удалить название', 'del_name')
-    if description:
-        update_btn['add_desc'] = ('Удалить описание', 'del_desc')
-    if image_id:
-        update_btn['add_image'] = ('Удалить фотографию', 'del_image')
-            
-    keyboard = update_keyboard(add_product_kb, update_btn)
-    
-    await msg.answer(
-        text=update_product_text(
-            name_product=name,
-            description_product=description,
-            price_product=price
-        ),
-        parse_mode=html,
-        reply_markup=keyboard
-    )
+    try:
+        price = float(msg.text)
+        await state.update_data(price=price)
+        
+        data = await state.get_data()
+        name = data.get('name')
+        description = data.get('description')
+        price = data.get('price')
+        image_id = data.get('image_id')
+        
+        update_btns = {}
+        update_btns['add_price'] = ('Удалить Цену', 'del_price')
+        
+        if name:
+            update_btns['add_name'] = ('Удалить название', 'del_name')
+        if description:
+            update_btns['add_desc'] = ('Удалить описание', 'del_desc')
+        if image_id:
+            update_btns['add_image'] = ('Удалить фотографию', 'del_image')
+                
+        keyboard = update_keyboard(add_product_kb, update_btns)
+        
+        await msg.answer(
+            text=update_product_text(
+                name_product=name,
+                description_product=description,
+                price_product=price
+            ),
+            parse_mode=html,
+            reply_markup=keyboard
+        )
+    except ValueError:
+        await msg.answer(
+            text='Цена должна быть число! Пример: 1, 1.0',
+            reply_markup=back_btn
+        )
 
 
 @product_router.callback_query(F.data == 'further')
@@ -243,13 +257,14 @@ async def validate_data(cb: CallbackQuery, state: FSMContext) -> None:
     
     if name and price:
         await cb.message.answer(
-            texts['warning_msg'],
-            parse_mode=html
+            texts['warning_txt'],
+            parse_mode=html,
+            reply_markup=back_btn
         )
         await state.set_state(UserState.wait_product)
     else:
         await cb.answer('Имя и цена обьязательны!', show_alert=True)
-
+    
 
 @product_router.message(UserState.wait_product)
 async def public_router(msg: Message, state: FSMContext) -> None:
@@ -258,9 +273,10 @@ async def public_router(msg: Message, state: FSMContext) -> None:
     description = data.get('description')
     price = data.get('price')
     image_id = data.get('image_id')
+    product_id = str(uuid.uuid4())
        
     if msg.text:
-        content = (msg.text, None)
+        content = ('', msg.text)
     elif msg.photo:
         image_id = msg.photo[-1].file_id
         caption = msg.caption if msg.caption else ''
@@ -276,10 +292,56 @@ async def public_router(msg: Message, state: FSMContext) -> None:
     
     add_new_product(
         user_id=msg.from_user.id,
+        product_id=product_id,
         product_name=name,
         product_description=description if description else '',
         product_image=image_id if image_id else '',
         product_price=price,
         product_to_receive=content
-    ) 
-        
+    )
+    
+    await msg.answer(
+        text=texts['info_product_txt'].format(**{'product_id': product_id}),
+        parse_mode=html,
+        reply_markup=home_btn
+    )
+
+
+@product_router.callback_query(F.data == 'back')
+async def back_state(cb: CallbackQuery, state: FSMContext) -> None:
+    current_state = await state.get_state()
+    if current_state:
+        await state.set_state(None)
+    
+    data = await state.get_data()
+    name = data.get('name')
+    description = data.get('description')
+    price = data.get('price')
+    image_id = data.get('image_id')
+    
+    update_btns = {}
+    
+    if name:
+        update_btns['add_name'] = ('Удалить название', 'del_name')
+    if price:
+        update_btns['add_price'] = ('Удалить Цену', 'del_price')
+    if description:
+        update_btns['add_desc'] = ('Удалить описание', 'del_desc')
+    if image_id:
+        update_btns['add_image'] = ('Удалить фотографию', 'del_image')
+            
+    keyboard = update_keyboard(add_product_kb, update_btns)
+    
+    await cb.message.answer(
+        text=update_product_text(
+            name_product=name,
+            description_product=description,
+            price_product=price
+        ),
+        parse_mode=html,
+        reply_markup=keyboard
+    )
+    
+    await cb.message.edit_reply_markup(
+        reply_markup=disable_keyboard(cb.message.reply_markup)
+    )

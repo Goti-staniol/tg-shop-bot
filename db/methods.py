@@ -5,9 +5,9 @@ from .models import (
 )
 
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import inspect
 from typing import Tuple
 
-import uuid
 
 def get_session() -> Session:
     Session = sessionmaker(bind=engine)
@@ -50,6 +50,7 @@ def get_agreement(user_id: int) -> bool:
 
 def add_new_product(
     user_id: int,
+    product_id: str,
     product_name: str,
     product_description: str | None,
     product_image: str | None,
@@ -62,7 +63,7 @@ def add_new_product(
     
     session.add(
         MarketProducts(
-            product_id=str(uuid.uuid4()),
+            product_id=product_id,
             user_id=user_id,
             product_name=product_name,
             product_discription=product_description,
@@ -74,4 +75,34 @@ def add_new_product(
     )
     session.commit()
     session.close()
+
+def get_products_list() -> list:
+    product_list = []
     
+    session = get_session()
+    users = session.query(MarketProducts).all()
+    for user in users:
+        product_list.append(user)
+
+    return product_list
+    
+def get_user_products(user_id: int) -> list:
+    products = []
+    
+    session = get_session()
+    user_products = session.query(MarketProducts).filter(
+        MarketProducts.user_id == user_id
+    ).all()
+    for product in user_products:
+        products.append(product)
+    
+    return products
+
+# def get_product_name(product_id: str) -> str:
+#     session = get_session()
+#     product = session.query(MarketProducts).filter(
+#         MarketProducts.product_id == product_id
+#     ).first()
+    
+#     session.close()
+#     return product.product_name

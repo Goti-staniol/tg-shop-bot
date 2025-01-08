@@ -1,5 +1,13 @@
 from . import InlineKeyboardButton, InlineKeyboardMarkup
 
+back_btn = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='🔙 Назад', callback_data='back')]
+])
+
+home_btn = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Главное меню', callback_data='home')]
+])
+
 menu_inl_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(
         text='🛍️ Катлог', 
@@ -39,5 +47,21 @@ add_product_kb = InlineKeyboardMarkup(inline_keyboard=[
         callback_data='further'
     )]
 ])
+
+profile_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(
+        text='🛍 Мои товары',
+        callback_data='my_products'
+    )],
+    [InlineKeyboardButton(
+        text='📥 Пополнить баланс',
+        callback_data='add_funds'
+    ), InlineKeyboardButton(
+        text='📤 Вывести средства',
+        callback_data='withdraw_funds'
+    )],
+    home_btn.inline_keyboard[0]
+])
+
 
 # [InlineKeyboardButton(text='📜 Пользовательское соглашение', callback_data='agreement')]
