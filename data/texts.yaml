@@ -26,10 +26,10 @@ info_product_txt: |
   Айди товара: {product_id}
 
 product_txt: |
-  <b>Название продукта: {product_name}
+  <b>
+  Название продукта: {product_name}
   Цена: {product_price}$
   
-  Описание:
-  {product_description}
+  Описание: {product_description}
   Айди: {product_id}</b>
   

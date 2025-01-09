@@ -71,12 +71,6 @@ profile_kb = InlineKeyboardMarkup(inline_keyboard=[
     ],
     [
         InlineKeyboardButton(
-            text='🛍 Мои товары',
-            callback_data='my_products'
-        )
-    ],
-    [
-        InlineKeyboardButton(
             text='📥 Пополнить баланс',
             callback_data='add_funds'
         ), 

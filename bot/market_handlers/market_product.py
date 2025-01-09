@@ -1,4 +1,5 @@
 from bot.kb.inline import add_product_kb, back_btn, home_btn
+from bot.state import UserState
 from bot.func import (
     disable_keyboard,
     remove_space,
@@ -6,23 +7,14 @@ from bot.func import (
     update_keyboard
 )
 
-from data.cfg import html, log_channel_id, texts
+from data.cfg import html, texts
 from db.methods import add_new_product
 
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InputFile
-from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 import uuid
-
-
-class UserState(StatesGroup):
-    wait_name = State()
-    wait_description = State()
-    wait_price = State()
-    wait_image = State()
-    wait_product = State()
 
 product_router = Router()
 
@@ -345,3 +337,4 @@ async def back_state(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.message.edit_reply_markup(
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
+    state.clear()

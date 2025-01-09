@@ -103,11 +103,16 @@ def get_user_products(user_id: int) -> List[object]:
 
 def get_product(product_id: str) -> object:
     session = get_session()
-    product = session.query(MarketProducts).filter_by(
-        product_id=product_id
-    ).first()
-    
-    return product
+    try:
+        product = session.query(MarketProducts).filter_by(
+            product_id=product_id
+        ).first()
+        
+        return product
+    except AttributeError:
+        return None
+    finally:
+        session.close()
 
 def get_products_id() -> None:
     products_id = []
@@ -123,14 +128,33 @@ def get_products_id() -> None:
     
 def is_user_owner_of_product(user_id: int, product_id: str) -> bool:
     session = get_session()
-    product = session.query(MarketProducts).filter(
-        MarketProducts.product_id == product_id
-    ).first()
-    
-    if product.user_id == user_id:
-        return True
-    return False
-    
+    try:
+        product = session.query(MarketProducts).filter(
+            MarketProducts.product_id == product_id
+        ).first()
+        
+        if product.user_id == user_id:
+            return True
+        return False
+    except AttributeError:
+        return False
+    finally:
+        session.close()
+
+def get_purchase_status(product_id: str) -> bool:
+    session = get_session()
+    try:
+        product = session.query(MarketProducts).filter(
+            MarketProducts.product_id == product_id
+        ).first()
+        
+        if product.purchase_status:
+            return True
+        return False
+    except AttributeError:
+        return False
+    finally:
+        session.close()
     
 # def get_product_name(product_id: str) -> str:
 #     session = get_session()
