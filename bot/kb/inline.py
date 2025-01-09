@@ -9,18 +9,24 @@ home_btn = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 menu_inl_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(
-        text='🛍️ Катлог', 
-        callback_data='market'
-    )],
-    [InlineKeyboardButton(
-        text='📦 Выставить товар', 
-        callback_data='add_product'
-    )],
-    [InlineKeyboardButton(
-        text="💬 Чат с поддержкой", 
-        callback_data="contact_support"
-    )]
+    [
+        InlineKeyboardButton(
+            text='🛍️ Катлог', 
+            callback_data='market'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='📦 Выставить товар', 
+            callback_data='add_product'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text="💬 Чат с поддержкой", 
+            callback_data="contact_support"
+        )
+    ]
 ]) 
 
 agree_btn = InlineKeyboardMarkup(inline_keyboard=[
@@ -28,40 +34,73 @@ agree_btn = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 add_product_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(
-        text='Добавить название',
-        callback_data='add_name'
-    ), InlineKeyboardButton(
-        text='Добавить описание',
-        callback_data='add_desc'
-    )],
-    [InlineKeyboardButton(
-        text='Добавить фото',
-        callback_data='add_image'
-    ), InlineKeyboardButton(
-        text='Добавить цену',
-        callback_data='add_price'
-    )],
-    [InlineKeyboardButton(
-        text='Дальше',
-        callback_data='further'
-    )]
+    [
+        InlineKeyboardButton(
+            text='Добавить название',
+            callback_data='add_name'
+        ), 
+        InlineKeyboardButton(
+            text='Добавить описание',
+            callback_data='add_desc'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='Добавить фото',
+            callback_data='add_image'
+        ),  
+        InlineKeyboardButton(
+            text='Добавить цену',
+            callback_data='add_price'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='Дальше',
+            callback_data='further'
+        )
+    ]
 ])
 
 profile_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(
-        text='🛍 Мои товары',
-        callback_data='my_products'
-    )],
-    [InlineKeyboardButton(
-        text='📥 Пополнить баланс',
-        callback_data='add_funds'
-    ), InlineKeyboardButton(
-        text='📤 Вывести средства',
-        callback_data='withdraw_funds'
-    )],
+    [
+        InlineKeyboardButton(
+            text='🛍 Мои товары',
+            callback_data='my_products'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='🛍 Мои товары',
+            callback_data='my_products'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='📥 Пополнить баланс',
+            callback_data='add_funds'
+        ), 
+        InlineKeyboardButton(
+            text='📤 Вывести средства',
+            callback_data='withdraw_funds'
+        )
+    ],
     home_btn.inline_keyboard[0]
 ])
 
-
+def product_buy_kb(product_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text='🛒 Купить товар',
+                callback_data=f'buy_{product_id}'
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text='📜 К списку товаров',
+                callback_data='back_to_products'
+            )
+        ]
+    ])
 # [InlineKeyboardButton(text='📜 Пользовательское соглашение', callback_data='agreement')]

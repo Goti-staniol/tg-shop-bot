@@ -19,7 +19,9 @@ class User(Base):
     
     user_id = Column(Integer, primary_key=True)
     agreement_status = Column(Boolean, default=False)
-    
+    amount = Column(Float, default=0)
+    block_status = Column(Boolean, default=False)
+
 
 class MarketProducts(Base):
     __tablename__ = 'products'
@@ -27,9 +29,11 @@ class MarketProducts(Base):
     product_id = Column(String, primary_key=True)
     user_id = Column(Integer, nullable=False)
     product_name = Column(String, nullable=False)
-    product_discription = Column(String, nullable=False)
+    product_description = Column(String, nullable=False)
     product_image = Column(String, nullable=False)
     product_price = Column(Float, nullable=False)
     
     text_to_receive = Column(String, nullable=False)
     file_to_receive = Column(String, nullable=False)
+
+    purchase_status = Column(Boolean, default=False)

@@ -51,9 +51,19 @@ def generate_keyboard(
     product_slice: list,
     current_page: int,
     total_pages: int,
-) -> list:
+    startswith: str,
+    search_btn: bool = False
+) -> InlineKeyboardMarkup:
     btn_list = []
     navigation_btns = []
+    
+    if search_btn:
+        btn_list.append(
+            [InlineKeyboardButton(
+                text='🔍 Найти товар',
+                callback_data='search_product'
+            )]
+        )
     
     for product in product_slice:
         btn_list.append(
@@ -64,15 +74,19 @@ def generate_keyboard(
         )
         
     if current_page > 1:
-        navigation_btns.append(InlineKeyboardButton(
-            text="⬅️ Назад", 
-            callback_data=f"page_{current_page - 1}"
-        ))
+        navigation_btns.append(
+            InlineKeyboardButton(
+                text="⬅️ Назад", 
+                callback_data=f"{startswith}{current_page - 1}"
+            )
+        )
     if current_page < total_pages:
-        navigation_btns.append(InlineKeyboardButton(
-            text="Вперед ➡️", 
-            callback_data=f"page_{current_page + 1}"
-        ))
+        navigation_btns.append(
+            InlineKeyboardButton(
+                text="Вперед ➡️", 
+                callback_data=f"{startswith}{current_page + 1}"
+            )
+        )
     if navigation_btns:
         btn_list.append(navigation_btns)
     
