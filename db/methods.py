@@ -6,7 +6,7 @@ from .models import (
 
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import inspect
-from typing import Tuple, List
+from typing import Tuple, List, Literal
 
 def get_session() -> Session:
     Session = sessionmaker(bind=engine)
@@ -54,7 +54,8 @@ def add_new_product(
     product_description: str | None,
     product_image: str | None,
     product_price: float | int,
-    product_to_receive: Tuple[str, str]
+    product_to_receive: Tuple[str, str],
+    file_type: str
 ) -> None:
     session = get_session()
     
@@ -69,7 +70,8 @@ def add_new_product(
             product_image=product_image,
             product_price=product_price,
             text_to_receive=text_to_recieve,
-            file_to_receive=file_to_recieve
+            file_to_receive=file_to_recieve,
+            file_type=file_type
         )
     )
     session.commit()
@@ -79,11 +81,12 @@ def get_products() -> List[object]:
     product_list = []
     
     session = get_session()
-    users = session.query(MarketProducts).all()
+    products = session.query(MarketProducts).all()
     session.close()
     
-    for user_product in users:
-        product_list.append(user_product)
+    for product in products:
+        if not product.purchase_status:
+            product_list.append(product)
     
     return product_list 
     
@@ -155,12 +158,28 @@ def get_purchase_status(product_id: str) -> bool:
         return False
     finally:
         session.close()
+
+def update_purchase_status(product_id: int) -> None:
+    session = get_session()
+    product = session.query(MarketProducts).filter_by(
+        product_id=product_id
+    ).first()
     
-# def get_product_name(product_id: str) -> str:
-#     session = get_session()
-#     product = session.query(MarketProducts).filter(
-#         MarketProducts.product_id == product_id
-#     ).first()
+    if product:
+        product.purchase_status = True
+        session.commit()
+    session.close()
+
+def get_file_type(product_id: str) -> Literal[
+    'text',
+    'photo',
+    'video',
+    'document'
+]:
+    session = get_session()
+    product = session.query(MarketProducts).filter_by(
+        product_id=product_id
+    ).first()
+    session.close()
     
-#     session.close()
-#     return product.product_name
+    return product.file_type

@@ -1,5 +1,5 @@
-from bot.func import generate_keyboard, disable_keyboard
-from bot.kb.inline import product_buy_kb, home_btn
+from bot.func import generate_keyboard, disable_keyboard, remove_space
+from bot.kb.inline import product_buy_kb, home_btn, proof_of_purchase_kb
 from bot.state import UserState
 
 from data.cfg import html, texts
@@ -8,7 +8,10 @@ from db.methods import (
     get_products, 
     get_products_id, 
     get_product, 
-    is_user_owner_of_product
+    is_user_owner_of_product,
+    get_purchase_status,
+    update_purchase_status,
+    get_file_type
 )
 
 from aiogram import Router, F
@@ -62,6 +65,7 @@ async def pages_handler(cb: CallbackQuery) -> None:
 @purchases_router.callback_query(lambda cb: cb.data in get_products_id())
 async def open_product_handler(cb: CallbackQuery) -> None:
     product = get_product(cb.data)
+    
     if product:
             values = {
                 'product_name': product.product_name,
@@ -91,6 +95,9 @@ async def open_product_handler(cb: CallbackQuery) -> None:
 
 @purchases_router.callback_query(F.data == 'search_product')
 async def search_handler(cb: CallbackQuery, state: FSMContext) -> None:
+    # await cb.message.edit_reply_markup(
+    #     reply_markup=disable_keyboard(cb.message.reply_markup)
+    # )
     sent_msg = await cb.message.answer(
         text='Введи ID товара:',
         reply_markup=home_btn
@@ -103,6 +110,8 @@ async def search_handler(cb: CallbackQuery, state: FSMContext) -> None:
 async def search_product(msg: Message, state: FSMContext) -> None:
     data = await state.get_data()
     sent_msg = data.get('sent_msg')
+    state.clear()
+    
     await sent_msg.delete()
     
     product = get_product(msg.text)
@@ -135,3 +144,64 @@ async def search_product(msg: Message, state: FSMContext) -> None:
             parse_mode=html,
             reply_markup=home_btn
         )
+
+
+@purchases_router.callback_query(F.data.startswith('buy_'))
+async def buy_handler(cb: CallbackQuery) -> None:
+    await cb.message.edit_reply_markup(
+        reply_markup=disable_keyboard(cb.message.reply_markup)
+    )
+    
+    product = get_product(cb.data.split('_')[1])
+    
+    if not get_purchase_status(product.product_id):
+        update_purchase_status(product.product_id)
+        
+        desc = remove_space(f'''\
+            <b>⚠️Проверяйте данные сразу!⚠️</b>
+                    
+            {product.text_to_receive}
+        ''')
+        file_to_receive = product.file_to_receive\
+            if product.file_to_receive else None
+        file_type = get_file_type(product.product_id)
+        
+        match file_type:
+            case 'text':
+                await cb.message.answer(
+                    text=desc,
+                    parse_mode=html,
+                    reply_markup=proof_of_purchase_kb
+                )
+            case 'photo':
+                await cb.message.answer_photo(
+                    photo=file_to_receive,
+                    caption=desc,
+                    parse_mode=html,
+                    reply_markup=proof_of_purchase_kb
+                )
+            case 'video':
+                await cb.message.answer_video(
+                    video=file_to_receive,
+                    caption=desc,
+                    parse_mode=html,
+                    reply_markup=proof_of_purchase_kb
+                )
+            case 'document':
+                await cb.message.answer_document(
+                    document=file_to_receive,
+                    caption=desc,
+                    parse_mode=html,
+                    reply_markup=proof_of_purchase_kb
+                )
+    else:
+        await cb.message.answer(
+            text='<b>Сожелеем! Товар был куплен!</b>',
+            parse_mode=html
+        )
+        
+
+@purchases_router.callback_query(F.data == 'confirm')
+async def confirm_handler(cb: CallbackQuery) -> None:
+    await cb.message.delete()
+    #TODO доделать принятия и возможность оставлять отзывы

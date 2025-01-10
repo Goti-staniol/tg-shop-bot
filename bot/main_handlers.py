@@ -1,9 +1,13 @@
 from data.cfg import texts, html
+from .func import disable_keyboard, generate_keyboard
 
-from .kb.inline import menu_inl_kb, agree_btn, profile_kb
 from .kb.markup import menu_keyboard
 
-from .func import disable_keyboard, generate_keyboard
+from .kb.inline import (
+    menu_inl_kb, 
+    agree_btn, 
+    profile_kb, 
+)
 
 from db.methods import (
     add_user, 

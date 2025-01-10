@@ -35,5 +35,6 @@ class MarketProducts(Base):
     
     text_to_receive = Column(String, nullable=False)
     file_to_receive = Column(String, nullable=False)
+    file_type = Column(String, nullable=False)
 
     purchase_status = Column(Boolean, default=False)

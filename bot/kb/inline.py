@@ -82,6 +82,21 @@ profile_kb = InlineKeyboardMarkup(inline_keyboard=[
     home_btn.inline_keyboard[0]
 ])
 
+proof_of_purchase_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(
+            text='✅ Подтвердить покупку',
+            callback_data='confirm'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='⛔️ Подать жалобу',
+            callback_data='report'
+        )
+    ]
+])
+
 def product_buy_kb(product_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
