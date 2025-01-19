@@ -65,18 +65,22 @@ add_product_kb = InlineKeyboardMarkup(inline_keyboard=[
 profile_kb = InlineKeyboardMarkup(inline_keyboard=[
     [
         InlineKeyboardButton(
-            text='🛍 Мои товары',
-            callback_data='my_products'
-        )
-    ],
-    [
-        InlineKeyboardButton(
             text='📥 Пополнить баланс',
             callback_data='add_funds'
         ), 
         InlineKeyboardButton(
             text='📤 Вывести средства',
             callback_data='withdraw_funds'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='🛍 Мои товары',
+            callback_data='my_products'
+        ),
+        InlineKeyboardButton(
+            text='🛒 Мои покупки',
+            callback_data='my_purchases'
         )
     ],
     home_btn.inline_keyboard[0]
@@ -93,6 +97,32 @@ proof_of_purchase_kb = InlineKeyboardMarkup(inline_keyboard=[
         InlineKeyboardButton(
             text='⛔️ Подать жалобу',
             callback_data='report'
+        )
+    ]
+])
+
+review_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(
+            text='💬 Оставить коментарий',
+            callback_data='add_comment'
+            
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='👍',
+            callback_data='mark_positive'
+        ),
+        InlineKeyboardButton(
+            text='👎',
+            callback_data='mark_negative'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='✅ Готово',
+            callback_data='ready'
         )
     ]
 ])

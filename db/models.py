@@ -1,13 +1,15 @@
 from data.cfg import db_url
 
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy import (
     create_engine, 
     Column,
     Integer, String, 
     Boolean,
-    LargeBinary,
-    Float
+    ForeignKey,
+    Float,
+    DateTime
 )
 
 engine = create_engine(db_url)
@@ -19,15 +21,32 @@ class User(Base):
     
     user_id = Column(Integer, primary_key=True)
     agreement_status = Column(Boolean, default=False)
-    amount = Column(Float, default=0)
+    available_balance = Column(Float, default=0)
+    frozen_balacnce = Column(Float, default=0)
     block_status = Column(Boolean, default=False)
+    deal_count = Column(Integer, default=0)
+    positive_mark = Column(Integer, default=0)
+    negative_mark = Column(Integer, default=0)
+    
+    comments = relationship('Comment', back_populates='user')
+    transactions = relationship('Transaction', back_populates='user')
+    
+
+class Transaction(Base):
+    __tablename__ = 'transactions'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    amount = Column(Float)
+    created_at = Column(DateTime, nullable=True)
+    user = relationship('User', back_populates='transactions')
 
 
-class MarketProducts(Base):
+class MarketProduct(Base):
     __tablename__ = 'products'
     
     product_id = Column(String, primary_key=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
     product_name = Column(String, nullable=False)
     product_description = Column(String, nullable=False)
     product_image = Column(String, nullable=False)
@@ -38,3 +57,19 @@ class MarketProducts(Base):
     file_type = Column(String, nullable=False)
 
     purchase_status = Column(Boolean, default=False)
+    buyer = Column(Integer, nullable=True)
+    
+    comments = relationship('Comment', back_populates='product')
+
+
+class Comment(Base):
+    __tablename__ = 'comments'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    product_id = Column(String, ForeignKey(
+        'products.product_id'), nullable=False)
+    comment = Column(String, nullable=False)
+    
+    product = relationship('MarketProduct', back_populates='comments')
+    user = relationship('User', back_populates='comments')

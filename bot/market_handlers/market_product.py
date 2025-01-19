@@ -353,4 +353,3 @@ async def back_state(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.message.edit_reply_markup(
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
-    

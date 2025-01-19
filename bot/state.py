@@ -8,3 +8,5 @@ class UserState(StatesGroup):
     wait_image = State()
     wait_product = State()
     wait_product_id = State()
+    wait_comment = State()
+    wait_amount = State()
