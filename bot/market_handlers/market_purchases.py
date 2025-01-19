@@ -39,6 +39,7 @@ from aiogram.fsm.context import FSMContext
 purchases_router = Router()
 
 
+@purchases_router.callback_query(F.data == 'back_to_products')
 @purchases_router.callback_query(F.data == 'market')
 async def user_products_hadler(cb: CallbackQuery) -> None:
     page = 1

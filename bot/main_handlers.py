@@ -16,7 +16,9 @@ from db.methods import (
     update_user_agreement,
     get_products_user,
     get_user_purchases,
-    balance_refill
+    balance_refill,
+    get_user_amount,
+    get_user_rating
 )
 
 from aiogram import Router, F
@@ -68,8 +70,15 @@ async def home_handler(cb: CallbackQuery, state: FSMContext) -> None:
 
 @main_router.message(F.text == '👤 Профиль')
 async def profile_handler(msg: Message) -> None:
+    deal_count, parcent = get_user_rating(msg.from_user.id)
+    values = {
+        'user_id': msg.from_user.id,
+        'user_amount': get_user_amount(msg.from_user.id),
+        'deal_count': deal_count,
+        'user_rating': parcent
+    }
     await msg.answer(
-        text=texts['profile_txt'],
+        text=texts['profile_txt'].format(**values),
         parse_mode=html,
         reply_markup=profile_kb
     )
@@ -131,6 +140,7 @@ async def my_purchases_handler(cb: CallbackQuery) -> None:
             total_pages=total_pages,
             startswith='mypurchases_'
         )
+
         await cb.message.answer(
             text='<b>Список ваших покупок:</b>',
             parse_mode=html,
@@ -154,6 +164,7 @@ async def purchases_page_handler(cb: CallbackQuery) -> None:
         total_pages=total_pages,
         startswith='mypurchases_'
     )
+    
     await cb.message.edit_text(
         text='<b>Список ваших покупок:</b>',
         parse_mode=html,
@@ -186,3 +197,13 @@ async def add_funds(msg: Message, state: FSMContext) -> None:
             parse_mode=html
         )
         await state.set_state(UserState.wait_amount)
+
+
+@main_router.callback_query(
+    lambda cb: cb.data in [
+        product.product_id for product in get_user_purchases(cb.from_user.id)
+    ]
+)
+async def user_purchases_handler(cb: CallbackQuery) -> None:
+    product = cb.data
+    print(product)

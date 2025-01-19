@@ -253,7 +253,12 @@ def get_user_purchases(user_id: int) -> List[object]:
     ).all()
     session.close()
     
-    return products
+    products_list = []
+    
+    for product in products:
+        products_list.append(product)
+    
+    return products_list
    
 def is_buyer_of_product(user_id: int, product_id: str) -> bool:
     session = get_session()
@@ -317,7 +322,7 @@ def transfer_funds(
         else:
             status = False
     session.close()
-    print(status)
+
     return status
 
 def transfer_to_avaible(user_id: int) -> None:
@@ -356,3 +361,18 @@ def withdraw_money(user_id: int, amount: float | int) -> bool:
     session.close()
     
     return status
+
+def get_user_rating(user_id: int) -> Tuple[int, float]:
+    session = get_session()
+    user = session.query(User).filter_by(
+        user_id=user_id
+    ).first()
+    session.close()
+    
+    if user:
+        total_count = user.positive_mark + user.negative_mark
+        if total_count == 0:
+            result = 0
+        else:
+            result = total_count / user.deal_count
+        return user.deal_count, f'{result}%'

@@ -42,6 +42,6 @@ product_txt: |
 profile_txt: |
   <b>
   Ваш айди: <code>{user_id}</code>
-  Ваш баланс: <code>{user_amount}</code>
+  Ваш баланс: <code>{user_amount}</code>$
   Ваш рейтинг: <code>{deal_count}</code> · <code>{user_rating}</code>
   </b>
