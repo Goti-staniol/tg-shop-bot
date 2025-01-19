@@ -121,7 +121,6 @@ async def buy_handler(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.message.edit_reply_markup(
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
-    
     product = get_product(cb.data.split('_')[1])
     saller_id = get_user_by_product(product.product_id)
     price = product.product_price

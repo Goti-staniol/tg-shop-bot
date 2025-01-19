@@ -294,13 +294,14 @@ def transfer_funds(
     amount_money: float | int
 ) -> bool:
     session = get_session()
-    users = session.query(User).filter(
-        User.user_id.in_([recipient_id, sender_id])
-    ).all()
-    
-    if users:
-        user_recipient, user_sender = users
-        
+    user_recipient = session.query(User).filter_by(
+        user_id=recipient_id
+    ).first()
+    user_sender = session.query(User).filter_by(
+        user_id=sender_id
+    ).first()
+
+    if user_recipient and user_sender:
         if user_sender.available_balance >= amount_money:
             user_sender.available_balance -= amount_money
             user_recipient.frozen_balacnce += amount_money
@@ -311,12 +312,12 @@ def transfer_funds(
                 created_at=datetime.now(timezone.utc)
             )
             session.add(transaction)
+            session.commit()
             status = True
         else:
             status = False
-        session.commit()
     session.close()
-    
+    print(status)
     return status
 
 def transfer_to_avaible(user_id: int) -> None:
