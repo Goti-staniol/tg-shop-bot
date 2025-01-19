@@ -13,13 +13,11 @@ agreement_txt: |
 warning_txt: |
   Теперь отправьте данные которые пользователь получит после оплаты!
 
-  <b>
-  ⚠️WARNING⚠️
+  <b>⚠️WARNING⚠️
   Запрещено добавлять:
   1. Не валидные данные.
   2. Данные которые могут навредить пользователю.
-  3. Данные которые просят пользователя отписать кому либо.
-  </b>
+  3. Данные которые просят пользователя отписать кому либо.</b>
 
   Такие данные могут призвести к блокировке средств и аккаунта, проверяйте предоставленую вами информацию!
 
@@ -28,20 +26,23 @@ info_product_txt: |
   Айди товара: {product_id}
 
 product_txt: |
-  <b>
-  Рейтинг продавца: <code>0</code> · 100%
+  <b>Рейтинг продавца: <code>0</code> · 100%
 
   Название продукта: {product_name}
   Цена: {product_price}$
   
   Описание: {product_description}
-  Айди: {product_id}
-  </b>
+  Айди: {product_id}</b>
 
 
 profile_txt: |
-  <b>
-  Ваш айди: <code>{user_id}</code>
+  <b>Ваш айди: <code>{user_id}</code>
   Ваш баланс: <code>{user_amount}</code>$
-  Ваш рейтинг: <code>{deal_count}</code> · <code>{user_rating}</code>
-  </b>
+  Ваш рейтинг: <code>{deal_count}</code> · <code>{user_rating}</code></b>
+
+buy_product_txt: |
+  <b>Имя товара: {product_name}
+  Цена товара: {product_price}
+  Дата покупки: {product_buy_time}
+  Описание: {product_desc}
+  Айди товара: {product_id}</b>

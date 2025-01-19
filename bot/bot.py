@@ -10,4 +10,4 @@ redis = Redis(host='127.0.0.1', port=6379, decode_responses=True)
 storage = RedisStorage(redis)
 
 bot = Bot(TOKEN)
-dp = Dispatcher()
+dp = Dispatcher(storage=storage)

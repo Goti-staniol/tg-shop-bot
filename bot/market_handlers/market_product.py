@@ -20,7 +20,7 @@ product_router = Router()
 
 
 @product_router.callback_query(F.data == 'add_product')
-async def add_item_handler(cb: CallbackQuery) -> None:
+async def add_item_handler(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.message.edit_reply_markup(
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
@@ -30,7 +30,7 @@ async def add_item_handler(cb: CallbackQuery) -> None:
         parse_mode=html,
         reply_markup=add_product_kb
     )
-    
+        
 
 @product_router.callback_query(F.data == 'add_name')
 async def add_name_handler(cb: CallbackQuery, state: FSMContext) -> None:

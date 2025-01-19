@@ -7,7 +7,8 @@ from .kb.markup import menu_keyboard
 from .kb.inline import (
     menu_inl_kb, 
     agree_btn, 
-    profile_kb, 
+    profile_kb,
+    my_purchases_kb
 )
 
 from db.methods import (
@@ -18,7 +19,9 @@ from db.methods import (
     get_user_purchases,
     balance_refill,
     get_user_amount,
-    get_user_rating
+    get_user_rating,
+    get_product,
+    get_file_type
 )
 
 from aiogram import Router, F
@@ -84,6 +87,33 @@ async def profile_handler(msg: Message) -> None:
     )
 
 
+@main_router.callback_query(F.data == 'add_funds')
+async def add_funds_handler(cb: CallbackQuery, state: FSMContext) -> None:
+    await cb.message.answer(
+        text='<b>Введи сумму на которую хочешь пополнить:</b>',
+        parse_mode=html,
+    )
+    
+    await state.set_state(UserState.wait_amount)
+
+
+@main_router.message(UserState.wait_amount, F.text)
+async def add_funds(msg: Message, state: FSMContext) -> None:
+    try:
+        amount = round(float(msg.text), 2)
+        balance_refill(msg.from_user.id, amount)
+        await msg.answer(
+            text=f'<b>Баланс успешно пополнен на</b> <code>{amount}</code>',
+            parse_mode=html
+        )
+    except ValueError:
+        await msg.answer(
+            text='<b>Некоректная сумма! Пример:</b> <code>1.0, 1</code>',
+            parse_mode=html
+        )
+        await state.set_state(UserState.wait_amount)
+
+
 @main_router.callback_query(F.data == 'my_products')
 async def user_products_hadler(cb: CallbackQuery) -> None:
     products = get_products_user(cb.from_user.id)
@@ -126,6 +156,7 @@ async def pages_handler(cb: CallbackQuery) -> None:
     )
 
 
+@main_router.callback_query(F.data == 'back_to_purchases')
 @main_router.callback_query(F.data == 'my_purchases')
 async def my_purchases_handler(cb: CallbackQuery) -> None:
     user_purchases = get_user_purchases(cb.from_user.id)
@@ -172,38 +203,37 @@ async def purchases_page_handler(cb: CallbackQuery) -> None:
     )
 
 
-@main_router.callback_query(F.data == 'add_funds')
-async def add_funds_handler(cb: CallbackQuery, state: FSMContext) -> None:
-    await cb.message.answer(
-        text='<b>Введи сумму на которую хочешь пополнить:</b>',
-        parse_mode=html,
-    )
-    
-    await state.set_state(UserState.wait_amount)
-
-
-@main_router.message(UserState.wait_amount, F.text)
-async def add_funds(msg: Message, state: FSMContext) -> None:
-    try:
-        amount = float('{:.2f}'.format(msg.text))
-        balance_refill(msg.from_user.id, amount)
-        await msg.answer(
-            text=f'<b>Баланс успешно пополнен на</b> <code>{amount}</code>',
-            parse_mode=html
-        )
-    except ValueError:
-        await msg.answer(
-            text='<b>Некоректная сумма! Пример:</b> <code>1.0, 1</code>',
-            parse_mode=html
-        )
-        await state.set_state(UserState.wait_amount)
-
-
 @main_router.callback_query(
     lambda cb: cb.data in [
         product.product_id for product in get_user_purchases(cb.from_user.id)
     ]
 )
-async def user_purchases_handler(cb: CallbackQuery) -> None:
-    product = cb.data
-    print(product)
+async def user_purchases_handler(cb: CallbackQuery, state: FSMContext) -> None:
+    product = get_product(cb.data)
+
+    if product:
+        values = {
+            'product_name': product.product_name,
+            'product_price': product.product_price,
+            'product_buy_time': 12,
+            'product_desc': product.product_description\
+                if product.product_description else 'Отсутсвует',
+            'product_id': product.product_id
+        }
+        
+        await cb.message.answer(
+            text=texts['buy_product_txt'].format(**values),
+            parse_mode=html,
+            reply_markup=my_purchases_kb
+        )
+
+        await state.update_data(product_to_view=product)
+
+
+@main_router.callback_query(F.data == 'view_content')
+async def view_content_handler(cb: CallbackQuery, state: FSMContext) -> None:
+    data = await state.get_data()
+    product = data.get('product_to_view')
+    
+    if product:
+        file_type = get_file_type(product.product_id)

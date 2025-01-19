@@ -127,6 +127,21 @@ review_kb = InlineKeyboardMarkup(inline_keyboard=[
     ]
 ])
 
+my_purchases_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(
+            text='👀 Посмотреть контент',
+            callback_data='view_content'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='📜 К списку покупок',
+            callback_data='back_to_purchases'
+        )
+    ]
+])
+
 def product_buy_kb(product_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
