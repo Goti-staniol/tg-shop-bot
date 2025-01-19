@@ -1,4 +1,10 @@
-from .models import (
+from datetime import datetime, timedelta, timezone
+from typing import Tuple, List, Literal, Optional, Type, Any
+
+from sqlalchemy import delete
+from sqlalchemy.orm import Session, sessionmaker
+
+from models import (
     User,
     MarketProduct,
     Comment,
@@ -6,20 +12,15 @@ from .models import (
     engine
 )
 
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import inspect, delete
-
-from datetime import datetime, timedelta, timezone
-from typing import Tuple, List, Literal, Optional
 
 def get_session() -> Session:
-    Session = sessionmaker(bind=engine)
-    return Session()
+    session = sessionmaker(bind=engine)
+    return session()
 
-def get_user(user_id: int, session: Session) -> Optional[User]:
-    user =  session.query(User).filter(
-        User.user_id == user_id
-        ).first()
+def get_user(user_id: int, session: Session) -> Type[User] | None:
+    user = session.query(User).filter_by(
+        user_id=user_id
+    ).first()
 
     if user:
         return user
@@ -85,7 +86,7 @@ def add_new_product(
         )
         session.commit()
 
-def get_products() -> List[MarketProduct]:
+def get_products() -> list[Type[MarketProduct]]:
     with get_session() as session:
         product_list = []
         products = session.query(MarketProduct).all()
@@ -96,7 +97,7 @@ def get_products() -> List[MarketProduct]:
         
         return product_list 
     
-def get_products_user(user_id: int) -> List[MarketProduct]:
+def get_products_user(user_id: int) -> list[Type[MarketProduct]]:
     with get_session() as session:
         products = []
         user_products = session.query(MarketProduct).filter_by(
@@ -135,8 +136,8 @@ def get_products_id(purchased_product: bool = True) -> List[MarketProduct]:
 def is_user_owner_of_product(user_id: int, product_id: str) -> bool:
     with get_session() as session:
         try:
-            product = session.query(MarketProduct).filter(
-                MarketProduct.product_id == product_id
+            product = session.query(MarketProduct).filter_by(
+                product_id=product_id
             ).first()
             
             if product.user_id == user_id:
@@ -148,8 +149,8 @@ def is_user_owner_of_product(user_id: int, product_id: str) -> bool:
 def get_purchase_status(product_id: str) -> bool:
     with get_session() as session:
         try:
-            product = session.query(MarketProduct).filter(
-                MarketProduct.product_id == product_id
+            product = session.query(MarketProduct).filter_by(
+                product_id=product_id
             ).first()
             
             if product.purchase_status:
@@ -196,9 +197,12 @@ def add_comment_to_product(
         session.add(new_comment)
         session.commit()
 
+
 def del_comment(product_id: str) -> None:
     with get_session() as session:
-        stmt = delete(Comment).where(Comment.product_id == product_id)
+        stmt = delete(Comment).filter_by(
+            product_id=product_id
+        )
         
         if stmt:
             session.execute(stmt)
@@ -226,7 +230,7 @@ def deduction_mark(user_id: int, mark_type: Literal['positive', 'negative']):
                 user.negative_mark -= 1   
             session.commit()
 
-def get_user_purchases(user_id: int) -> List[MarketProduct]:
+def get_user_purchases(user_id: int) -> list[Type[MarketProduct]]:
     with get_session() as session:
         products_list = []
         products = session.query(MarketProduct).filter_by(
@@ -333,7 +337,7 @@ def withdraw_money(user_id: int, amount: float | int) -> bool:
     
         return status
 
-def get_user_rating(user_id: int) -> Tuple[int, float]:
+def get_user_rating(user_id: int) -> tuple[Any, str]:
     with get_session() as session:
         user = session.query(User).filter_by(
             user_id=user_id
@@ -341,7 +345,7 @@ def get_user_rating(user_id: int) -> Tuple[int, float]:
         
         if user:
             total_count = user.positive_mark + user.negative_mark
-            if (total_count != 0 and user.deal_count != 0):
+            if total_count != 0 and user.deal_count != 0:
                 result = total_count / user.deal_count
             else:
                 result = 0

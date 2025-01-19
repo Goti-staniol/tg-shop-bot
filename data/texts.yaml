@@ -34,7 +34,6 @@ product_txt: |
   Описание: {product_description}
   Айди: {product_id}</b>
 
-
 profile_txt: |
   <b>Ваш айди: <code>{user_id}</code>
   Ваш баланс: <code>{user_amount}</code>$
@@ -42,7 +41,7 @@ profile_txt: |
 
 buy_product_txt: |
   <b>Имя товара: {product_name}
-  Цена товара: {product_price}
-  Дата покупки: {product_buy_time}
+  Цена товара: <code>{product_price}</code>
+  Дата покупки: <code>{product_buy_time}</code>
   Описание: {product_desc}
   Айди товара: {product_id}</b>

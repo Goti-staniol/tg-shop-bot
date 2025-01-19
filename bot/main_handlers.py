@@ -227,13 +227,43 @@ async def user_purchases_handler(cb: CallbackQuery, state: FSMContext) -> None:
             reply_markup=my_purchases_kb
         )
 
-        await state.update_data(product_to_view=product)
+        await state.update_data(product_to_view=product.product_id)
 
 
 @main_router.callback_query(F.data == 'view_content')
 async def view_content_handler(cb: CallbackQuery, state: FSMContext) -> None:
     data = await state.get_data()
-    product = data.get('product_to_view')
-    
+    product_id = data.get('product_to_view')
+    product = get_product(product_id)
+
     if product:
         file_type = get_file_type(product.product_id)
+        desc = product.text_to_receive
+        file_to_receive = product.file_to_receive
+
+        match file_type:
+            case 'text':
+                await cb.message.answer(
+                    text=desc,
+                    parse_mode=html,
+                )
+            case 'photo':
+                await cb.message.answer_photo(
+                    photo=file_to_receive,
+                    caption=desc,
+                    parse_mode=html,
+                )
+            case 'video':
+                await cb.message.answer_video(
+                    video=file_to_receive,
+                    caption=desc,
+                    parse_mode=html,
+                )
+            case 'document':
+                await cb.message.answer_document(
+                    document=file_to_receive,
+                    caption=desc,
+                    parse_mode=html,
+                )
+
+

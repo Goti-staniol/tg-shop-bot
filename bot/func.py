@@ -1,5 +1,8 @@
 from textwrap import dedent
 from typing import Dict, Tuple
+
+from aiogram.types import ReplyKeyboardMarkup
+
 from bot.kb import InlineKeyboardMarkup, InlineKeyboardButton
 
 def remove_space(text: str) -> str:
@@ -18,7 +21,7 @@ def update_keyboard(
 
     return keyboard
 
-def disable_keyboard(keyboard: list) -> list:
+def disable_keyboard(keyboard: InlineKeyboardMarkup) -> InlineKeyboardMarkup:
     for buttons in keyboard.inline_keyboard:
         for button in buttons:
             button.callback_data = 'disable'
