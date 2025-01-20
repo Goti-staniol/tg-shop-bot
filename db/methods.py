@@ -12,7 +12,6 @@ from models import (
     engine
 )
 
-
 def get_session() -> Session:
     session = sessionmaker(bind=engine)
     return session()
