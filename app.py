@@ -14,7 +14,6 @@ import asyncio
 async def start_redis():
     await redis.ping()
 
-
 async def start_bot():
     Base.metadata.create_all(engine)
 
