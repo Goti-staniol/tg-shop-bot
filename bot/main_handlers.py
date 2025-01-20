@@ -1,5 +1,5 @@
 from data.cfg import texts, html
-from .func import disable_keyboard, generate_keyboard
+from .func import disable_keyboard, generate_keyboard, update_keyboard
 
 from .state import UserState
 
@@ -21,7 +21,9 @@ from db.methods import (
     get_user_amount,
     get_user_rating,
     get_product,
-    get_file_type
+    get_file_type,
+    withdraw_money,
+    transfer_to_avaible
 )
 
 from aiogram import Router, F
@@ -36,12 +38,12 @@ main_router = Router()
 @main_router.message(Command('start'))
 async def start_handler(msg: Message, state: FSMContext) -> None:
     if not get_agreement(msg.chat.id):
-        global sent_msg
         sent_msg = await msg.answer(
             text=texts['agreement_txt'],
             parse_mode=html,
             reply_markup=agree_btn
         )
+        await state.update_data(sent_msg=sent_msg)
     else:
         await msg.answer(
             text=texts['welcome_txt'],
@@ -52,14 +54,21 @@ async def start_handler(msg: Message, state: FSMContext) -> None:
             text='Не забывайте следить за нашими новостями!',
             reply_markup=menu_keyboard
         )
-    await state.clear()
+        await state.clear()
+
 
 
 @main_router.callback_query(F.data == 'agree')
 async def agree_handler(cb: CallbackQuery, state: FSMContext) -> None:
-    await sent_msg.delete()
+    data = await state.get_data()
+    sent_msg = data.get('sent_msg')
+
+    if sent_msg:
+        await sent_msg.delete()
+
     add_user(cb.from_user.id)
     update_user_agreement(cb.from_user.id)
+
     await start_handler(cb.message, state)
 
 
@@ -73,12 +82,12 @@ async def home_handler(cb: CallbackQuery, state: FSMContext) -> None:
 
 @main_router.message(F.text == '👤 Профиль')
 async def profile_handler(msg: Message) -> None:
-    deal_count, parcent = get_user_rating(msg.from_user.id)
+    deal_count, percent = get_user_rating(msg.from_user.id)
     values = {
         'user_id': msg.from_user.id,
         'user_amount': get_user_amount(msg.from_user.id),
         'deal_count': deal_count,
-        'user_rating': parcent
+        'user_rating': percent
     }
     await msg.answer(
         text=texts['profile_txt'].format(**values),
@@ -106,6 +115,7 @@ async def add_funds(msg: Message, state: FSMContext) -> None:
             text=f'<b>Баланс успешно пополнен на</b> <code>{amount}</code>',
             parse_mode=html
         )
+        await state.clear()
     except ValueError:
         await msg.answer(
             text='<b>Некоректная сумма! Пример:</b> <code>1.0, 1</code>',
@@ -114,8 +124,25 @@ async def add_funds(msg: Message, state: FSMContext) -> None:
         await state.set_state(UserState.wait_amount)
 
 
+@main_router.callback_query(F.data == 'withdraw_funds')
+async def withdraw_funds_handler(cb: CallbackQuery, state: FSMContext) -> None:
+    transfer_to_avaible(cb.from_user.id)
+
+    await cb.message.answer(
+        text='<b>Укажите смму на вывод:</b>',
+        parse_mode=html
+    )
+
+    await state.set_state(UserState.wait_amount_to_withdraw)
+
+
+@main_router.callback_query(UserState.wait_amount_to_withdraw, F.text)
+async def withdraw_money(msg: Message, state: FSMContext) -> None:
+    ... #TODO Сделать вывод
+
+
 @main_router.callback_query(F.data == 'my_products')
-async def user_products_hadler(cb: CallbackQuery) -> None:
+async def user_products_handler(cb: CallbackQuery) -> None:
     products = get_products_user(cb.from_user.id)
     
     if len(products) != 0:
@@ -169,7 +196,7 @@ async def my_purchases_handler(cb: CallbackQuery) -> None:
             product_slice=products_slice,
             current_page=page,
             total_pages=total_pages,
-            startswith='mypurchases_'
+            startswith='mypurchasespage_'
         )
 
         await cb.message.answer(
@@ -183,7 +210,7 @@ async def my_purchases_handler(cb: CallbackQuery) -> None:
         )
 
 
-@main_router.callback_query(F.data.startswith('mypurchases_'))
+@main_router.callback_query(F.data.startswith('mypurchasespage_'))
 async def purchases_page_handler(cb: CallbackQuery) -> None:
     page = int(cb.data.split('_')[1])
     user_purchases = get_user_purchases(cb.from_user.id)
@@ -193,7 +220,7 @@ async def purchases_page_handler(cb: CallbackQuery) -> None:
         product_slice=products_slice,
         current_page=page,
         total_pages=total_pages,
-        startswith='mypurchases_'
+        startswith='mypurchasespage_'
     )
     
     await cb.message.edit_text(

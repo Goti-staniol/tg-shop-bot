@@ -4,7 +4,7 @@ from typing import Tuple, List, Literal, Optional, Type, Any
 from sqlalchemy import delete
 from sqlalchemy.orm import Session, sessionmaker
 
-from models import (
+from db.models import (
     User,
     MarketProduct,
     Comment,
@@ -115,7 +115,8 @@ def get_product(product_id: str) -> Optional[MarketProduct]:
                 product_id=product_id
             ).first()
             
-            return product
+            if product:
+                return product
         except AttributeError:
             return None
 
@@ -207,14 +208,14 @@ def del_comment(product_id: str) -> None:
             session.execute(stmt)
             session.commit()
 
-def add_mark(user_id: int, mark: Literal['positive', 'negative']) -> None:
+def add_mark(user_id: int, mark_type: Literal['positive', 'negative']) -> None:
     with get_session() as session:
         user = session.query(User).filter_by(user_id=user_id).first()
         
         if user:
-            if mark == 'positive':
+            if mark_type == 'positive':
                 user.positive_mark += 1
-            if mark == 'negative':
+            if mark_type == 'negative':
                 user.negative_mark += 1
             session.commit()
 
@@ -240,17 +241,6 @@ def get_user_purchases(user_id: int) -> list[Type[MarketProduct]]:
             products_list.append(product)
         
         return products_list
-   
-def is_buyer_of_product(user_id: int, product_id: str) -> bool:
-    with get_session() as session:
-        product = session.query(MarketProduct).filter_by(
-            product_id=product_id
-        ).first()
-        
-        if product.user_id == user_id:
-            return True
-        else:
-            return False
 
 def get_user_amount(user_id: int) -> float:
     with get_session() as session:

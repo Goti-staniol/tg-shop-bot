@@ -6,9 +6,10 @@ from bot.func import (
     update_keyboard
 )
 
+from bot import bot
 from bot.kb.inline import (
-    product_buy_kb, 
-    home_btn, 
+    product_buy_kb,
+    home_btn,
     proof_of_purchase_kb,
     review_kb
 )
@@ -23,7 +24,6 @@ from db.methods import (
     get_purchase_status,
     update_product,
     get_file_type,
-    is_buyer_of_product,
     add_comment_to_product,
     add_mark,
     deduction_mark,
@@ -33,8 +33,8 @@ from db.methods import (
 
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.exceptions import TelegramBadRequest
 
 purchases_router = Router()
 
@@ -55,7 +55,7 @@ async def user_products_hadler(cb: CallbackQuery) -> None:
     )
     
     await cb.message.answer(
-        text='товары:',
+        text='Товары:',
         reply_markup=keyboard
     )
 
@@ -75,7 +75,7 @@ async def pages_handler(cb: CallbackQuery) -> None:
     )
     
     await cb.message.edit_text(
-        text='товары:',
+        text='Товары:',
         reply_markup=keyboard
     )
 
@@ -86,33 +86,28 @@ async def open_product_handler(cb: CallbackQuery) -> None:
     
     if product:
         # if not is_user_owner_of_product(cb.from_user.id, product.product_id):
-            # if not is_buyer_of_product(cb.from_user.id, product.product_id):
-                values = {
-                    'product_name': product.product_name,
-                    'product_price': product.product_price,
-                    'product_description': product.product_description + '\n'\
-                        if product.product_description else 'Отсутсвует!',
-                    'product_id': product.product_id
-                }
-                keyboard = product_buy_kb(product.product_id)
-            
-                if not product.product_image:
-                    await cb.message.answer(
-                        text=texts['product_txt'].format(**values),
-                        parse_mode=html,
-                        reply_markup=keyboard
-                    )
-                else:
-                    await cb.message.answer_photo(
-                        photo=product.product_image,
-                        caption=texts['product_txt'].format(**values),
-                        parse_mode=html,
-                        reply_markup=keyboard
-                    )
-            # else:
-            #     await cb.message.answer(
-            #         'Вы купили этот продукт'
-            #     )
+            values = {
+                'product_name': product.product_name,
+                'product_price': product.product_price,
+                'product_description': product.product_description + '\n'\
+                    if product.product_description else 'Отсутсвует!',
+                'product_id': product.product_id
+            }
+            keyboard = product_buy_kb(product.product_id)
+
+            if not product.product_image:
+                await cb.message.answer(
+                    text=texts['product_txt'].format(**values),
+                    parse_mode=html,
+                    reply_markup=keyboard
+                )
+            else:
+                await cb.message.answer_photo(
+                    photo=product.product_image,
+                    caption=texts['product_txt'].format(**values),
+                    parse_mode=html,
+                    reply_markup=keyboard
+                )
         # else:
         #     print('Вы владелец')
 
@@ -122,8 +117,9 @@ async def buy_handler(cb: CallbackQuery, state: FSMContext) -> None:
     await cb.message.edit_reply_markup(
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
+
     product = get_product(cb.data.split('_')[1])
-    saller_id = get_user_by_product(product.product_id)
+    seller_id = get_user_by_product(product.product_id)
     price = product.product_price
     
     await state.update_data(product_id=product.product_id)
@@ -131,7 +127,7 @@ async def buy_handler(cb: CallbackQuery, state: FSMContext) -> None:
     if not get_purchase_status(product.product_id):
         status = transfer_funds(
             sender_id=cb.from_user.id,
-            recipient_id=saller_id,
+            recipient_id=seller_id,
             amount_money=price
         )
         
@@ -188,18 +184,16 @@ async def buy_handler(cb: CallbackQuery, state: FSMContext) -> None:
         
 
 @purchases_router.callback_query(F.data == 'confirm')
-async def confirm_handler(cb: CallbackQuery, state: FSMContext) -> None:
+async def confirm_handler(cb: CallbackQuery) -> None:
     await cb.message.edit_reply_markup(
         reply_markup=disable_keyboard(cb.message.reply_markup)
     )
     
-    review_msg = await cb.message.answer(
+    await cb.message.answer(
         text='<b>Благодарим за покупку! Отсавьте отзыв, если не сложно!</b>',
         parse_mode=html,
         reply_markup=review_kb
     )
-    
-    await state.update_data(review_msg=review_msg)
 
 
 @purchases_router.callback_query(F.data == 'add_comment')
@@ -209,7 +203,7 @@ async def add_comment_handler(cb: CallbackQuery, state: FSMContext) -> None:
     )
     
     await cb.message.answer(
-        '<b>Введите коментарий:</b>',
+        text='<b>Введите коментарий:</b>',
         parse_mode=html
     )
     
@@ -241,7 +235,7 @@ async def add_comment(msg: Message, state: FSMContext) -> None:
 @purchases_router.callback_query(F.data.startswith('mark_'))
 async def mark_handler(cb: CallbackQuery, state: FSMContext) -> None:
     mark = cb.data.split('_')[1]
-    update_btn = {}
+    update_btns = {}
 
     data = await state.get_data()
     positive_mark = data.get('positive_mark', False)
@@ -263,6 +257,26 @@ async def mark_handler(cb: CallbackQuery, state: FSMContext) -> None:
             add_mark(cb.from_user.id, 'negative')
             await state.update_data(negative_mark=True)
 
+    if positive_mark:
+        update_btns['mark_positive'] = ('*👍*', 'disable_mark_positive')
+    else:
+        update_btns['disable_mark_positive'] = ('👍', 'mark_positive')
+
+    if negative_mark:
+        update_btns['mark_negative'] = ('*👎*', 'disable_mark_negative')
+    else:
+        update_btns['disable_mark_negative'] = ('👎', 'mark_negative')
+
+    if positive_mark or negative_mark:
+        keyboard = update_keyboard(
+            keyboard=review_kb,
+            data=update_btns
+        )
+
+        try:
+            await cb.message.edit_reply_markup(reply_markup=keyboard)
+        except TelegramBadRequest:
+            pass
 
 @purchases_router.callback_query(F.data == 'ready')
 async def ready_handler(cb: CallbackQuery, state: FSMContext) -> None:
@@ -282,17 +296,19 @@ async def search_handler(cb: CallbackQuery, state: FSMContext) -> None:
         reply_markup=home_btn
     )
     
-    await state.update_data(sent_msg=sent_msg)
+    await state.update_data(sent_msg_id=sent_msg.message_id)
     await state.set_state(UserState.wait_product_id)
 
 
 @purchases_router.message(UserState.wait_product_id, F.text)
 async def search_product(msg: Message, state: FSMContext) -> None:
     data = await state.get_data()
-    sent_msg = data.get('sent_msg')
-    state.clear()
-    
-    await sent_msg.delete()
+    sent_msg_id = data.get('sent_msg_id')
+
+    await bot.delete_message(
+        chat_id=msg.chat.id,
+        message_id=sent_msg_id
+    )
     
     product = get_product(msg.text)
     if product:
@@ -319,8 +335,10 @@ async def search_product(msg: Message, state: FSMContext) -> None:
                 reply_markup=keyboard
             )
     else:
-        msg.answer(
+        await msg.answer(
             text='<b>Данный товар не был найден на рынке!</b>',
             parse_mode=html,
             reply_markup=home_btn
         )
+
+    await state.clear()

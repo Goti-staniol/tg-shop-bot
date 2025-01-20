@@ -10,3 +10,4 @@ class UserState(StatesGroup):
     wait_product_id = State()
     wait_comment = State()
     wait_amount = State()
+    wait_amount_to_withdraw = State()

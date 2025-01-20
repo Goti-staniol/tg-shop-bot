@@ -9,9 +9,9 @@ def remove_space(text: str) -> str:
     return dedent(text)
 
 def update_keyboard(
-    keyboard: list, 
+    keyboard: InlineKeyboardMarkup,
     data: Dict[str, Tuple[str, str]],
-) -> list:
+) -> InlineKeyboardMarkup:
     for buttons in keyboard.inline_keyboard:
         for button in buttons:
             if button.callback_data in data:
