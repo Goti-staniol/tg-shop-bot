@@ -1,5 +1,3 @@
-from xmlrpc.client import Fault
-
 from bot.state import UserState
 from bot.func import (
     generate_keyboard, 
@@ -21,8 +19,7 @@ from data.cfg import html, texts
 from db.methods import (
     get_products, 
     get_products_id, 
-    get_product, 
-    is_user_owner_of_product,
+    get_product,
     get_purchase_status,
     update_product,
     get_file_type,
