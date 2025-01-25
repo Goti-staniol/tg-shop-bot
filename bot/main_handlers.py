@@ -1,6 +1,7 @@
 from data.cfg import texts, html
-from .func import disable_keyboard, generate_keyboard, update_keyboard
+from bot import bot
 
+from .func import disable_keyboard, generate_keyboard, update_keyboard
 from .state import UserState
 
 from .kb.markup import menu_keyboard
@@ -23,7 +24,9 @@ from db.methods import (
     get_product,
     get_file_type,
     withdraw_money,
-    transfer_to_avaible
+    transfer_to_avaible,
+    get_added_datetime,
+
 )
 
 from aiogram import Router, F
@@ -43,7 +46,7 @@ async def start_handler(msg: Message, state: FSMContext) -> None:
             parse_mode=html,
             reply_markup=agree_btn
         )
-        await state.update_data(sent_msg=sent_msg)
+        await state.update_data(sent_msg=sent_msg.message_id)
     else:
         await msg.answer(
             text=texts['welcome_txt'],
@@ -61,10 +64,10 @@ async def start_handler(msg: Message, state: FSMContext) -> None:
 @main_router.callback_query(F.data == 'agree')
 async def agree_handler(cb: CallbackQuery, state: FSMContext) -> None:
     data = await state.get_data()
-    sent_msg = data.get('sent_msg')
+    sent_msg_id = data.get('sent_msg')
 
-    if sent_msg:
-        await sent_msg.delete()
+    if sent_msg_id:
+        await bot.delete_message(cb.from_user.id, sent_msg_id)
 
     add_user(cb.from_user.id)
     update_user_agreement(cb.from_user.id)
@@ -121,7 +124,6 @@ async def add_funds(msg: Message, state: FSMContext) -> None:
             text='<b>Некоректная сумма! Пример:</b> <code>1.0, 1</code>',
             parse_mode=html
         )
-        await state.set_state(UserState.wait_amount)
 
 
 @main_router.callback_query(F.data == 'withdraw_funds')
@@ -129,7 +131,7 @@ async def withdraw_funds_handler(cb: CallbackQuery, state: FSMContext) -> None:
     transfer_to_avaible(cb.from_user.id)
 
     await cb.message.answer(
-        text='<b>Укажите смму на вывод:</b>',
+        text='<b>Укажите сумму на вывод:</b>',
         parse_mode=html
     )
 
@@ -137,14 +139,31 @@ async def withdraw_funds_handler(cb: CallbackQuery, state: FSMContext) -> None:
 
 
 @main_router.callback_query(UserState.wait_amount_to_withdraw, F.text)
-async def withdraw_money(msg: Message, state: FSMContext) -> None:
-    ... #TODO Сделать вывод
+async def withdraw_user_money(msg: Message, state: FSMContext) -> None:
+    try:
+        amount = round(float(msg.text), 2)
+        result = withdraw_money(msg.from_user.id, amount)
+        if result:
+            await msg.answer(
+                text=f'<b>Сумма <code>{amount}</code> была выведеннна!</b>',
+                parse_mode=html
+            )
+            await state.clear()
+        else:
+            await msg.answer(
+                text='<b>Сожелеем, но возможно часть суммы заморожена!</b>',
+                parse_mode=html
+            )
+    except ValueError:
+        await msg.answer(
+            text='<b>Неккоректная сумма!</b>',
+            parse_mode=html
+        )
 
 
 @main_router.callback_query(F.data == 'my_products')
 async def user_products_handler(cb: CallbackQuery) -> None:
     products = get_products_user(cb.from_user.id)
-    
     if len(products) != 0:
         page = 1
         products_slice = products[(page - 1) * 5:page * 5]
@@ -187,7 +206,6 @@ async def pages_handler(cb: CallbackQuery) -> None:
 @main_router.callback_query(F.data == 'my_purchases')
 async def my_purchases_handler(cb: CallbackQuery) -> None:
     user_purchases = get_user_purchases(cb.from_user.id)
-    
     if len(user_purchases) != 0:
         page = 1
         products_slice = user_purchases[(page - 1) * 5:page * 5]
@@ -242,7 +260,7 @@ async def user_purchases_handler(cb: CallbackQuery, state: FSMContext) -> None:
         values = {
             'product_name': product.product_name,
             'product_price': product.product_price,
-            'product_buy_time': 12,
+            'product_buy_time': get_added_datetime(product.product_id),
             'product_desc': product.product_description\
                 if product.product_description else 'Отсутсвует',
             'product_id': product.product_id
@@ -261,36 +279,52 @@ async def user_purchases_handler(cb: CallbackQuery, state: FSMContext) -> None:
 async def view_content_handler(cb: CallbackQuery, state: FSMContext) -> None:
     data = await state.get_data()
     product_id = data.get('product_to_view')
-    product = get_product(product_id)
+
+    if product_id:
+        product = get_product(product_id)
+        if product:
+            file_type = get_file_type(product.product_id)
+            desc = product.text_to_receive
+            file_to_receive = product.file_to_receive
+
+            match file_type:
+                case 'text':
+                    await cb.message.answer(
+                        text=desc,
+                        parse_mode=html,
+                    )
+                case 'photo':
+                    await cb.message.answer_photo(
+                        photo=file_to_receive,
+                        caption=desc,
+                        parse_mode=html,
+                    )
+                case 'video':
+                    await cb.message.answer_video(
+                        video=file_to_receive,
+                        caption=desc,
+                        parse_mode=html,
+                    )
+                case 'document':
+                    await cb.message.answer_document(
+                        document=file_to_receive,
+                        caption=desc,
+                        parse_mode=html,
+                    )
+
+
+@main_router.callback_query(F.data == 'my_products')
+async def my_products_handler(cb: CallbackQuery) -> None:
+    product = get_products_user(cb.from_user.id)
 
     if product:
-        file_type = get_file_type(product.product_id)
-        desc = product.text_to_receive
-        file_to_receive = product.file_to_receive
+        ...
 
-        match file_type:
-            case 'text':
-                await cb.message.answer(
-                    text=desc,
-                    parse_mode=html,
-                )
-            case 'photo':
-                await cb.message.answer_photo(
-                    photo=file_to_receive,
-                    caption=desc,
-                    parse_mode=html,
-                )
-            case 'video':
-                await cb.message.answer_video(
-                    video=file_to_receive,
-                    caption=desc,
-                    parse_mode=html,
-                )
-            case 'document':
-                await cb.message.answer_document(
-                    document=file_to_receive,
-                    caption=desc,
-                    parse_mode=html,
-                )
+
+
+
+
+
+
 
 

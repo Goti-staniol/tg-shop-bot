@@ -68,7 +68,7 @@ def add_new_product(
     file_type: str
 ) -> None:
     with get_session() as session:
-        file_to_recieve, text_to_recieve = product_to_receive
+        file_to_receive, text_to_receive = product_to_receive
         
         session.add(
             MarketProduct(
@@ -78,9 +78,10 @@ def add_new_product(
                 product_description=product_description,
                 product_image=product_image,
                 product_price=product_price,
-                text_to_receive=text_to_recieve,
-                file_to_receive=file_to_recieve,
-                file_type=file_type
+                text_to_receive=text_to_receive,
+                file_to_receive=file_to_receive,
+                file_type=file_type,
+                created_at=datetime.now(timezone.utc)
             )
         )
         session.commit()
@@ -108,7 +109,7 @@ def get_products_user(user_id: int) -> list[Type[MarketProduct]]:
             
         return products
 
-def get_product(product_id: str) -> Optional[MarketProduct]:
+def get_product(product_id: str) -> Type[MarketProduct] | None:
     with get_session() as session:
         try:
             product = session.query(MarketProduct).filter_by(
@@ -120,14 +121,21 @@ def get_product(product_id: str) -> Optional[MarketProduct]:
         except AttributeError:
             return None
 
-def get_products_id(purchased_product: bool = True) -> List[MarketProduct]:
+def get_products_id(
+        user_id: int,
+        user_purchased_product: bool = True,
+        user_product_for_sale: bool = True
+) -> List[MarketProduct]:
     with get_session() as session:
         products_id = []
         users = session.query(MarketProduct).all()
         
         for product in users:
-            if not purchased_product:
+            if not user_purchased_product:
                 if product.buyer:
+                    continue
+            if not user_product_for_sale:
+                if product.user_id == user_id:
                     continue
             products_id.append(product.product_id)
         
@@ -182,6 +190,15 @@ def get_file_type(product_id: str) -> Literal[
         ).first()
         
         return product.file_type
+
+def get_added_datetime(product_id: str) -> datetime:
+    with get_session() as session:
+        product = session.query(MarketProduct).filter_by(
+            product_id=product_id
+        ).first()
+
+        if product:
+            return product.created_at
 
 def add_comment_to_product(
     user_id: int, 

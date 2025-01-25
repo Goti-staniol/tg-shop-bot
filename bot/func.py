@@ -62,18 +62,22 @@ def generate_keyboard(
     
     if search_btn:
         btn_list.append(
-            [InlineKeyboardButton(
-                text='🔍 Найти товар',
-                callback_data='search_product'
-            )]
+            [
+                InlineKeyboardButton(
+                    text='🔍 Найти товар',
+                    callback_data='search_product'
+                )
+            ]
         )
     
     for product in product_slice:
         btn_list.append(
-            [InlineKeyboardButton(
-                text=product.product_name,
-                callback_data=product.product_id
-            )]
+            [
+                InlineKeyboardButton(
+                    text=product.product_name,
+                    callback_data=product.product_id
+                )
+            ]
         )
         
     if current_page > 1:

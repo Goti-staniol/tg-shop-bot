@@ -152,6 +152,12 @@ def product_buy_kb(product_id: str) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
+                text='🔎 О продавце',
+                callback_data=f'seller_info_{product_id}'
+            )
+        ],
+        [
+            InlineKeyboardButton(
                 text='📜 К списку товаров',
                 callback_data='back_to_products'
             )

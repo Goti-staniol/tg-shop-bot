@@ -1,3 +1,5 @@
+from xmlrpc.client import Fault
+
 from bot.state import UserState
 from bot.func import (
     generate_keyboard, 
@@ -80,36 +82,39 @@ async def pages_handler(cb: CallbackQuery) -> None:
     )
 
 
-@purchases_router.callback_query(lambda cb: cb.data in get_products_id(False))
+@purchases_router.callback_query(
+    lambda cb: cb.data in get_products_id(
+        cb.from_user.id,
+        False,
+        False
+    )
+)
 async def open_product_handler(cb: CallbackQuery) -> None:
     product = get_product(cb.data)
     
     if product:
-        # if not is_user_owner_of_product(cb.from_user.id, product.product_id):
-            values = {
-                'product_name': product.product_name,
-                'product_price': product.product_price,
-                'product_description': product.product_description + '\n'\
-                    if product.product_description else 'Отсутсвует!',
-                'product_id': product.product_id
-            }
-            keyboard = product_buy_kb(product.product_id)
+        values = {
+            'product_name': product.product_name,
+            'product_price': product.product_price,
+            'product_description': product.product_description + '\n'\
+                if product.product_description else 'Отсутсвует!',
+            'product_id': product.product_id
+        }
+        keyboard = product_buy_kb(product.product_id)
 
-            if not product.product_image:
-                await cb.message.answer(
-                    text=texts['product_txt'].format(**values),
-                    parse_mode=html,
-                    reply_markup=keyboard
-                )
-            else:
-                await cb.message.answer_photo(
-                    photo=product.product_image,
-                    caption=texts['product_txt'].format(**values),
-                    parse_mode=html,
-                    reply_markup=keyboard
-                )
-        # else:
-        #     print('Вы владелец')
+        if not product.product_image:
+            await cb.message.answer(
+                text=texts['product_txt'].format(**values),
+                parse_mode=html,
+                reply_markup=keyboard
+            )
+        else:
+            await cb.message.answer_photo(
+                photo=product.product_image,
+                caption=texts['product_txt'].format(**values),
+                parse_mode=html,
+                reply_markup=keyboard
+            )
 
 
 @purchases_router.callback_query(F.data.startswith('buy_'))
@@ -137,7 +142,7 @@ async def buy_handler(cb: CallbackQuery, state: FSMContext) -> None:
             desc = remove_space(f'''\
                 <b>⚠️Проверяйте данные сразу!⚠️</b>
                         
-                {product.text_to_receive}
+                {product.text_to_receive if product.text_to_receive else None}
             ''')
             file_to_receive = product.file_to_receive\
                 if product.file_to_receive else None
@@ -224,6 +229,13 @@ async def add_comment(msg: Message, state: FSMContext) -> None:
         await msg.answer(
             text='<b>Коментарий добавлен!</b>',
             parse_mode=html
+        )
+
+        await msg.answer(
+            text='\
+            <b>Благодарим за покупку! Отсавьте отзыв, если не сложно!</b>',
+            parse_mode=html,
+            reply_markup=review_kb
         )
     else:
         await msg.answer(

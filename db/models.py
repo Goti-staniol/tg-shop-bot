@@ -61,6 +61,8 @@ class MarketProduct(Base):
     
     comments = relationship('Comment', back_populates='product')
 
+    created_at = Column(DateTime, nullable=True)
+
 
 class Comment(Base):
     __tablename__ = 'comments'
